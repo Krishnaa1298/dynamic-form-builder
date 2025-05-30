@@ -1,0 +1,29 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">{{ role === 'admin' ? 'Admin Template List' : 'User Template List' }}</h2>
+
+      <div class="mt-4">
+        <h4>Saved Forms</h4>
+        <div *ngIf="templates.length === 0" class="alert alert-info mt-3">
+          No forms have been saved yet.
+        </div>
+        <div *ngIf="templates.length > 0" class="list-group mt-3">
+          <div *ngFor="let template of templates; let idx = index" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ template.name }}</h5>
+              <small>{{ template.createdAt | date:'medium' }}</small>
+            </div>
+            <p class="mb-1">{{ template.description }}</p>
+            <small>Created by: {{ template.createdBy }}</small>
+            <div class="mt-2">
+              <button *ngIf="role === 'admin'" class="btn btn-sm btn-outline-primary me-2" (click)="editTemplate(idx)">Edit</button>
+              <button *ngIf="role === 'admin'" class="btn btn-sm btn-outline-danger me-2" (click)="deleteTemplate(idx+'')">Delete</button>
+              <button *ngIf="role === 'user'" class="btn btn-sm btn-outline-success" (click)="viewTemplate(idx)">View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> 
+  </div>
+</div>

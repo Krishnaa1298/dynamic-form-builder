@@ -1,0 +1,159 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-3 p-3 border-end">
+      <h4>Form Fields</h4>
+      <div class="list-group" cdkDropList #fieldTypesList="cdkDropList" [cdkDropListData]="fieldTypes" [cdkDropListConnectedTo]="[formCanvasList]">
+        <div class="list-group-item" *ngFor="let field of fieldTypes" cdkDrag [cdkDragData]="field">
+          <div class="d-flex align-items-center">
+            <i class="bi {{ getFieldIcon(field.type) }} me-2"></i>
+            <span>{{ field.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-9 p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Form Canvas</h4>
+        <div>
+          <button class="btn btn-secondary me-2" (click)="cancel()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveForm()">Save Form</button>
+        </div>
+      </div>
+      <div class="border rounded p-3 min-vh-100" cdkDropList #formCanvasList="cdkDropList" [cdkDropListData]="formFields" [cdkDropListConnectedTo]="[fieldTypesList]" (cdkDropListDropped)="onFieldDropped($event)">
+        <div *ngFor="let field of formFields; let i = index" class="mb-3 p-3 border rounded" cdkDrag>
+          <div class="mb-2 d-flex justify-content-between align-items-start">
+            <label class="form-label mb-1">
+              <i class="bi {{ getFieldIcon(field.type) }} me-2"></i>
+              {{ field.label }}
+              <span *ngIf="field.required" class="text-danger ms-1">*</span>
+            </label>
+            <div>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="editField(i)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="removeField(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <ng-container [ngSwitch]="field.type">
+              <input *ngSwitchCase="'text'" type="text" class="form-control" [placeholder]="field.placeholder || ''" [required]="field.required">
+              <textarea *ngSwitchCase="'textarea'" class="form-control" [placeholder]="field.placeholder || ''" [required]="field.required"></textarea>
+              <input *ngSwitchCase="'number'" type="number" class="form-control" [placeholder]="field.placeholder || ''" [required]="field.required">
+              <input *ngSwitchCase="'date'" type="date" class="form-control" [required]="field.required">
+              <select *ngSwitchCase="'select'" class="form-control" [required]="field.required">
+                <option value="">Select an option</option>
+                <option *ngFor="let option of field.options" [value]="option.value">{{ option.label }}</option>
+              </select>
+              <div *ngSwitchCase="'checkbox'">
+                <div *ngFor="let option of field.options; let j = index" class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [id]="'checkbox-' + i + '-' + j"
+                    [checked]="field.selectedValues?.includes(option.value)"
+                    #checkboxInput
+                    (change)="onCheckboxChange(i, option.value, checkboxInput.checked)"
+                  >
+                  <label class="form-check-label" [for]="'checkbox-' + i + '-' + j">{{ option.label }}</label>
+                </div>
+              </div>
+              <div *ngSwitchCase="'radio'">
+                <div *ngFor="let option of field.options; let j = index" class="form-check">
+                  <input
+                    type="radio"
+                    class="form-check-input"
+                    [name]="'radio-' + i"
+                    [id]="'radio-' + i + '-' + j"
+                    [value]="option.value"
+                    [checked]="field.selectedValue === option.value"
+                    (change)="onRadioChange(i, option.value)"
+                  >
+                  <label class="form-check-label" [for]="'radio-' + i + '-' + j">{{ option.label }}</label>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #fieldConfigDialog>
+  <div class="modal-header">
+    <h5 class="modal-title">Configure Field</h5>
+    <button type="button" class="btn-close" (click)="closeDialog()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="fieldConfigForm">
+      <div class="mb-3">
+        <label class="form-label">Label</label>
+        <input type="text" class="form-control" formControlName="label">
+      </div>
+      <div class="mb-3" *ngIf="currentField?.type !== 'checkbox' && currentField?.type !== 'radio'">
+        <label class="form-label">Placeholder</label>
+        <input type="text" class="form-control" formControlName="placeholder">
+      </div>
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" formControlName="required">
+          <label class="form-check-label">Required</label>
+        </div>
+      </div>
+      <div *ngIf="currentField?.type === 'select' || currentField?.type === 'radio' || currentField?.type === 'checkbox'">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label mb-0">Options</label>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addOption()">
+            <i class="bi bi-plus"></i> Add Option
+          </button>
+        </div>
+        <div formArrayName="options">
+          <div *ngFor="let option of optionsArray.controls; let i = index" [formGroupName]="i" class="row mb-2">
+            <div class="col">
+              <input type="text" class="form-control" formControlName="label" placeholder="Label">
+            </div>
+            <div class="col">
+              <input type="text" class="form-control" formControlName="value" placeholder="Value">
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeOption(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeDialog()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="saveField()" [disabled]="!fieldConfigForm.valid">Save</button>
+  </div>
+</ng-template>
+
+<!-- Save Form Dialog -->
+<ng-template #saveFormDialog>
+  <div class="modal-header">
+    <h5 class="modal-title">Save Form Template</h5>
+    <button type="button" class="btn-close" (click)="closeSaveDialog()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="saveFormTemplate">
+      <div class="mb-3">
+        <label class="form-label">Template Name</label>
+        <input type="text" class="form-control" formControlName="name" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" formControlName="description" rows="3"></textarea>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeSaveDialog()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="confirmSave()" [disabled]="!saveFormTemplate.valid">Save Template</button>
+  </div>
+</ng-template>
